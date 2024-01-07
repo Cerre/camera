@@ -29,3 +29,4 @@ async def websocket_endpoint(websocket: WebSocket):
             encoded_frame = base64.b64encode(frame).decode('utf-8')
             await websocket.send_text(encoded_frame)
 
+
