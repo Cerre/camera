@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Camera Stream</title>
+    <style>
+        /* Add some basic styling for the video feed */
+        #camera-image {
+            width: 100%;
+            max-width: 640px; /* Adjust the width as needed */
+            border: 1px solid #ddd; /* Just for better visibility */
+            border-radius: 4px;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Welcome to the Camera Stream</h1>
+    <img id="camera-image" src="" alt="Camera Stream">
+
+    <script>
+        // JavaScript to create a WebSocket connection and update the image source
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const img = document.getElementById('camera-image');
+            const ws = new WebSocket("ws://localhost:8000/ws");
+
+            ws.onmessage = function(event) {
+                // Update the image source with the received frame
+                img.src = 'data:image/jpeg;base64,' + event.data;
+            };
+
+            ws.onerror = function(event) {
+                // Log WebSocket errors to the console
+                console.error("WebSocket error observed:", event);
+            };
+
+            ws.onclose = function(event) {
+                // Log WebSocket connection closures to the console
+                console.log("WebSocket connection closed:", event);
+            };
+        });
+    </script>
+</body>
+</html>
