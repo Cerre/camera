@@ -16,9 +16,13 @@ fast_mtcnn = FastMTCNN(
 def load_embeddings_from_file(file_path):
     return torch.load(file_path).numpy()
 
-
-your_embeddings = load_embeddings_from_file("clusters/0_clusters.pt")
-friend_embeddings = load_embeddings_from_file("clusters/1_clusters.pt")
+embeddings_exist = False
+try:
+    your_embeddings = load_embeddings_from_file("clusters/0_clusters.pt")
+    friend_embeddings = load_embeddings_from_file("clusters/1_clusters.pt")
+    embeddings_exist = True
+except:
+    print("No embeddings yet")
 
 
 resnet = InceptionResnetV1(pretrained="vggface2").eval()
@@ -85,20 +89,20 @@ def get_embedding(face, resnet):
 def classify_face(new_embedding, threshold=0.5):
     max_similarity = 0
     label = "Unknown"
+    if embeddings_exist:
+        for embedding in your_embeddings:
+            similarity = cosine_similarity(new_embedding, embedding)
+            if similarity > max_similarity:
+                max_similarity = similarity
+                label = "Filip"
 
-    for embedding in your_embeddings:
-        similarity = cosine_similarity(new_embedding, embedding)
-        if similarity > max_similarity:
-            max_similarity = similarity
-            label = "Filip"
+        for embedding in friend_embeddings:
+            similarity = cosine_similarity(new_embedding, embedding)
+            if similarity > max_similarity:
+                max_similarity = similarity
+                label = "Ossian"
 
-    for embedding in friend_embeddings:
-        similarity = cosine_similarity(new_embedding, embedding)
-        if similarity > max_similarity:
-            max_similarity = similarity
-            label = "Ossian"
-
-    if max_similarity < threshold:
-        label = "Unknown"
+        if max_similarity < threshold:
+            label = "Unknown"
 
     return label

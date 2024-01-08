@@ -15,10 +15,6 @@ camera = Camera()
 save_dir = 'data/2'
 os.makedirs(save_dir, exist_ok=True)
 
-
-
-
-
 @app.get("/", response_class=HTMLResponse)
 def read_root():
     html_file_path = pathlib.Path(__file__).parent / "index.html"
