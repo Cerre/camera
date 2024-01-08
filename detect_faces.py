@@ -2,46 +2,103 @@ from PIL import Image
 import cv2
 from facenet_pytorch import MTCNN, InceptionResnetV1
 import torch
+from torchvision import transforms
 from fast_mtcnn import FastMTCNN
+from cosine import cosine_similarity
 
 # If required, create a face detection pipeline using MTCNN:
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
+device = "cuda" if torch.cuda.is_available() else "cpu"
 fast_mtcnn = FastMTCNN(
-    stride=4,
-    resize=1,
-    margin=14,
-    factor=0.6,
-    keep_all=True,
-    device="cpu"
+    stride=4, resize=1, margin=14, factor=0.6, keep_all=True, device="cpu"
 )
-# Create an inception resnet (in eval mode):
-resnet = InceptionResnetV1(pretrained='vggface2').eval()
 
 
-def classify_face(face):
-    img_embedding = resnet(img_cropped.unsqueeze(0))
-    resnet.classify = True
-    img_probs = resnet(img_cropped.unsqueeze(0))
-    return img_probs
+def load_embeddings_from_file(file_path):
+    return torch.load(file_path).numpy()
+
+
+your_embeddings = load_embeddings_from_file("clusters/0_clusters.pt")
+friend_embeddings = load_embeddings_from_file("clusters/1_clusters.pt")
+
+
+resnet = InceptionResnetV1(pretrained="vggface2").eval()
+if torch.cuda.is_available():
+    resnet = resnet.to("cuda")
 
 
 def detect_faces(image):
-    # Detect faces in the image
-    # faces = mtcnn.detect_faces(image)
-    boxes, probs, points = fast_mtcnn(image)
-    # print(f"len faces: {len(faces)}")
-    # print(faces)
+    boxes, _, _ = fast_mtcnn(image)
+    detected_faces = []
 
-    # Draw bounding boxes around detected faces
     if boxes is not None:
-        for (box, point) in zip(boxes, points):
-            # print(type(face))
+        for box in boxes:
             (x0, y0, x1, y1) = box
-            start_point = (int(x0), int(y0))  # Convert to integer and create a tuple for the start point 
-            end_point = (int(x1), int(y1))  # Calculate end point and convert to integer
-            color = (255, 0, 0)  # Blue color in BGR
+            # Crop and process face
+            face = image[int(y0) : int(y1), int(x0) : int(x1)]
+            face_embedding = get_embedding(face, resnet)
+
+            # Classify the face
+            if face_embedding is not None:
+                label = classify_face(face_embedding)
+                detected_faces.append((box, label))
+
+            # Draw the bounding box and label
+            start_point = (int(x0), int(y0))
+            end_point = (int(x1), int(y1))
+            color = (255, 0, 0)
             thickness = 2
+            cv2.putText(
+                image,
+                label,
+                (int(x0), int(y0) - 10),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.9,
+                color,
+                2,
+            )
             image = cv2.rectangle(image, start_point, end_point, color, thickness)
 
-    return image
+    return image, detected_faces
 
+
+def get_embedding(face, resnet):
+    # Preprocess the face image
+    face = Image.fromarray(face)  # Convert to PIL image
+    face_transform = transforms.Compose(
+        [
+            transforms.Resize((160, 160)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5]),
+        ]
+    )
+    face_tensor = face_transform(face).unsqueeze(0)
+
+    # Ensure tensor is on the same device as the model
+    face_tensor = face_tensor.to(next(resnet.parameters()).device)
+
+    # Get the embedding
+    with torch.no_grad():
+        face_embedding = resnet(face_tensor)
+        return face_embedding.squeeze().cpu().numpy()
+
+
+def classify_face(new_embedding, threshold=0.5):
+    max_similarity = 0
+    label = "Unknown"
+
+    for embedding in your_embeddings:
+        similarity = cosine_similarity(new_embedding, embedding)
+        if similarity > max_similarity:
+            max_similarity = similarity
+            label = "Filip"
+
+    for embedding in friend_embeddings:
+        similarity = cosine_similarity(new_embedding, embedding)
+        if similarity > max_similarity:
+            max_similarity = similarity
+            label = "Ossian"
+
+    if max_similarity < threshold:
+        label = "Unknown"
+
+    return label
