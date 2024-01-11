@@ -4,17 +4,18 @@ from detect_faces import detect_faces
 
 
 class Camera:
-    def __init__(self):
+    def __init__(self, classifier):
         self.cap = cv2.VideoCapture(0)
         self.last_frame = None
         self.last_faces = None
+        self.classifier = classifier
 
     def get_frame(self):
         ret, frame = self.cap.read()
         if not ret:
             return None
 
-        processed_frame, faces = detect_faces(frame)
+        processed_frame, faces = detect_faces(frame, self.classifier)
         self.last_frame = processed_frame
         self.last_faces = faces
 

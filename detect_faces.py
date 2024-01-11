@@ -1,10 +1,13 @@
 from PIL import Image
 import cv2
 from facenet_pytorch import MTCNN, InceptionResnetV1
+import joblib
 import torch
 from torchvision import transforms
 from fast_mtcnn import FastMTCNN
+import os
 from cosine import cosine_similarity
+from names import names
 
 # If required, create a face detection pipeline using MTCNN:
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -30,23 +33,20 @@ if torch.cuda.is_available():
     resnet = resnet.to("cuda")
 
 
-def detect_faces(image):
+def detect_faces(image, classifier):
     boxes, _, _ = fast_mtcnn(image)
     detected_faces = []
 
     if boxes is not None:
         for box in boxes:
             (x0, y0, x1, y1) = box
-            # Crop and process face
             face = image[int(y0) : int(y1), int(x0) : int(x1)]
             face_embedding = get_embedding(face, resnet)
 
-            # Classify the face
             if face_embedding is not None:
-                label = classify_face(face_embedding)
+                label = classifier.classify(face_embedding)
                 detected_faces.append((box, label))
 
-            # Draw the bounding box and label
             start_point = (int(x0), int(y0))
             end_point = (int(x1), int(y1))
             color = (255, 0, 0)
