@@ -1,9 +1,14 @@
+import os
 from sklearn.model_selection import train_test_split
 
-from evaluation.knn_classifier import load_embeddings
+from knn_classifier_training import load_embeddings
 
 embedding_size = 512  # Replace with the actual size of your individual embeddings
-X, y = load_embeddings("embeddings", embedding_size)
+script_dir = os.path.dirname(__file__)
+
+# Construct the path to the embeddings folder
+embeddings_path = os.path.join(script_dir, '..', "embeddings")
+X, y = load_embeddings(embeddings_path, embedding_size)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, random_state=42
