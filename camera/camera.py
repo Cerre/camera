@@ -1,6 +1,5 @@
-# camera.py
 import cv2
-from detect_faces import detect_faces
+from face_detection.detect_faces import detect_faces
 
 
 class Camera:

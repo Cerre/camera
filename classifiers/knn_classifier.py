@@ -1,12 +1,12 @@
 from collections import Counter
 import joblib
 from classifiers.classifier import Classifier
-from names import names
+from utils.names import names
 
 
 class KNNClassifier(Classifier):
     def __init__(self, threshold=0.7, num_neighbors=5):
-        self.knn_model = joblib.load("knn_model.pkl")
+        self.knn_model = joblib.load("models/knn_model.pkl")
         self.threshold = threshold
         self.num_neighbors = num_neighbors
 

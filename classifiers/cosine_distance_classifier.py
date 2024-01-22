@@ -2,7 +2,7 @@ from classifiers.classifier import Classifier
 import os
 from scipy.spatial.distance import cosine
 import torch
-from names import names
+from utils.names import names
 
 
 class CosineSimilarityClassifier(Classifier):

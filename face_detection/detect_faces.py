@@ -4,10 +4,8 @@ from facenet_pytorch import MTCNN, InceptionResnetV1
 import joblib
 import torch
 from torchvision import transforms
-from fast_mtcnn import FastMTCNN
-import os
-from cosine import cosine_similarity
-from names import names
+from face_detection.fast_mtcnn import FastMTCNN
+from utils.cosine import cosine_similarity
 
 # If required, create a face detection pipeline using MTCNN:
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -18,6 +16,7 @@ fast_mtcnn = FastMTCNN(
 
 def load_embeddings_from_file(file_path):
     return torch.load(file_path).numpy()
+
 
 embeddings_exist = False
 try:

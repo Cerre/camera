@@ -1,5 +1,5 @@
 from fastapi import FastAPI, WebSocket
-from camera import Camera
+from camera.camera import Camera
 import cv2
 import base64
 import uvicorn
@@ -18,6 +18,7 @@ classifier = KNNClassifier()
 camera = Camera(classifier)
 save_dir = "data/3"
 os.makedirs(save_dir, exist_ok=True)
+
 
 @app.get("/", response_class=HTMLResponse)
 def read_root():
