@@ -3,8 +3,8 @@ from camera.camera import Camera
 import cv2
 import base64
 import uvicorn
-from classifiers.knn_classifier import KNNClassifier
-from classifiers.cosine_distance_classifier import CosineSimilarityClassifier
+from classifiers.knn_classifier.knn_classifier import KNNClassifier
+from classifiers.cosine_similarity.cosine_distance_classifier import CosineSimilarityClassifier
 
 from fastapi import FastAPI, WebSocket, HTTPException, status
 from fastapi.responses import HTMLResponse
@@ -13,8 +13,8 @@ import datetime
 import os
 
 app = FastAPI()
-classifier = KNNClassifier()
-# casslifier = CosineSimilarityClassifier()
+# classifier = KNNClassifier()
+classifier = CosineSimilarityClassifier()
 camera = Camera(classifier)
 save_dir = "data/3"
 os.makedirs(save_dir, exist_ok=True)
@@ -32,7 +32,7 @@ def read_root():
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     while True:
-        frame = camera.get_frame()
+        frame = camera.get_frame(return_faces=True)
         if frame is not None:
             # Convert frame to base64 for web compatibility
             encoded_frame = base64.b64encode(frame).decode("utf-8")

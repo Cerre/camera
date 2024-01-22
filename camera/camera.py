@@ -9,14 +9,19 @@ class Camera:
         self.last_faces = None
         self.classifier = classifier
 
-    def get_frame(self):
+    def get_frame(self, return_faces: bool = True):
         ret, frame = self.cap.read()
         if not ret:
             return None
+        
+        self.last_frame = frame
+        processed_frame = frame
 
-        processed_frame, faces = detect_faces(frame, self.classifier)
-        self.last_frame = processed_frame
-        self.last_faces = faces
+        if return_faces:
+            processed_frame, faces = detect_faces(frame, self.classifier)
+            self.last_frame = processed_frame
+            self.last_faces = faces
+        
 
         _, jpeg = cv2.imencode(".jpg", processed_frame)
         return jpeg.tobytes()

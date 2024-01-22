@@ -1,11 +1,8 @@
 from PIL import Image
 import cv2
-from facenet_pytorch import MTCNN, InceptionResnetV1
-import joblib
 import torch
 from torchvision import transforms
 from face_detection.fast_mtcnn import FastMTCNN
-from utils.cosine import cosine_similarity
 
 # If required, create a face detection pipeline using MTCNN:
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -27,11 +24,6 @@ except:
     print("No embeddings yet")
 
 
-resnet = InceptionResnetV1(pretrained="vggface2").eval()
-if torch.cuda.is_available():
-    resnet = resnet.to("cuda")
-
-
 def detect_faces(image, classifier):
     boxes, _, _ = fast_mtcnn(image)
     detected_faces = []
@@ -40,10 +32,9 @@ def detect_faces(image, classifier):
         for box in boxes:
             (x0, y0, x1, y1) = box
             face = image[int(y0) : int(y1), int(x0) : int(x1)]
-            face_embedding = get_embedding(face, resnet)
 
-            if face_embedding is not None:
-                label = classifier.classify(face_embedding)
+            if face is not None:
+                label = classifier.classify(face)
                 detected_faces.append((box, label))
 
             start_point = (int(x0), int(y0))
@@ -83,25 +74,3 @@ def get_embedding(face, resnet):
     with torch.no_grad():
         face_embedding = resnet(face_tensor)
         return face_embedding.squeeze().cpu().numpy()
-
-
-def classify_face(new_embedding, threshold=0.5):
-    max_similarity = 0
-    label = "Unknown"
-    if embeddings_exist:
-        for embedding in your_embeddings:
-            similarity = cosine_similarity(new_embedding, embedding)
-            if similarity > max_similarity:
-                max_similarity = similarity
-                label = "Filip"
-
-        for embedding in friend_embeddings:
-            similarity = cosine_similarity(new_embedding, embedding)
-            if similarity > max_similarity:
-                max_similarity = similarity
-                label = "Ossian"
-
-        if max_similarity < threshold:
-            label = "Unknown"
-
-    return label
